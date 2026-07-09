@@ -1,11 +1,661 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Bookmarklet Share</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Điều Khiển Quản Trị</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #1a1a1d;
+            --text-dark: #f0f0f0;
+            --panel-dark: #2c2c34;
+            --primary-dark: #66d9ef;
+            --secondary-dark: #a6e22e;
+            --accent-dark: #f92672;
+            --border-dark: #444;
+
+            --bg-light: #f0f2f5;
+            --text-light: #1c1e21;
+            --panel-light: #ffffff;
+            --primary-light: #1877f2;
+            --secondary-light: #28a745;
+            --accent-light: #dc3545;
+            --border-light: #ccd0d5;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dashboard {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background-color: var(--panel-dark);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: background-color 0.3s;
+        }
+        h2 {
+            color: var(--primary-dark);
+            border-bottom: 2px solid var(--primary-dark);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .control-group { margin-bottom: 20px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #c5c6c7;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border-dark);
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        #overrideBtn { background-color: #fa383e; color: white; }
+        #overrideBtn:hover { background-color: #e03238; }
+        .dice-inputs { display: flex; gap: 10px; }
+        .session-info { font-size: 1.1em; }
+        .session-info strong { color: var(--secondary-dark); }
+        .tabs { display: flex; border-bottom: 1px solid var(--border-dark); margin-bottom: 15px; }
+        .tab-button { background: none; border: none; color: #c5c6c7; padding: 10px 15px; cursor: pointer; font-size: 1em; }
+        .tab-button.active { color: var(--primary-dark); border-bottom: 2px solid var(--primary-dark); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        #status { margin-top: 15px; padding: 10px; border-radius: 4px; display: none; }
+        #status.success { background-color: #28a745; color: white; }
+        #status.error { background-color: #dc3545; color: white; }
+        #status.info { background-color: #17a2b8; color: white; }
+        ul { list-style-type: none; padding: 0; }
+        li { background-color: #33343b; padding: 8px 12px; border-radius: 4px; margin-bottom: 5px; }
+        .bet-table { width: 100%; border-collapse: collapse; }
+        .bet-table th, .bet-table td { padding: 8px; text-align: left; border-bottom: 1px solid var(--border-dark); }
+        .bet-table th { color: var(--accent-dark); }
+        .bet-table tr.win { opacity: 1; }
+        .bet-table tr.loss { opacity: 0.5; }
+
+        #themeToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background-color: #444;
+            color: white;
+            border: 1px solid #666;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 1.5em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- Light Mode --- */
+        body.light-mode {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+        }
+        body.light-mode .panel { background-color: var(--panel-light); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        body.light-mode h2 { color: var(--primary-light); border-bottom-color: var(--primary-light); }
+        body.light-mode label { color: #606770; }
+        body.light-mode select, body.light-mode input { background-color: #f0f2f5; color: #1c1e21; border-color: var(--border-light); }
+        body.light-mode .session-info strong { color: var(--secondary-light); }
+        body.light-mode .tab-button { color: #606770; }
+        body.light-mode .tab-button.active { color: var(--primary-light); border-bottom-color: var(--primary-light); }
+        body.light-mode li { background-color: #f0f2f5; border: 1px solid #e0e0e0; }
+        body.light-mode .bet-table th, body.light-mode .bet-table td { border-bottom-color: var(--border-light); }
+        body.light-mode .bet-table th { color: var(--accent-light); }
+        body.light-mode #themeToggle { background-color: #e9e9e9; color: #333; border-color: #ccc; }
+    </style>
 </head>
 <body>
-<h2>Kéo thả vào thanh bookmark để dùng:</h2>
-<a href="javascript:(async function(){let html=document.documentElement.outerHTML,cssText='';for(let s of document.styleSheets){try{for(let r of s.cssRules){cssText+=r.cssText+'\n'}}catch(e){}}let jsText='';document.querySelectorAll('script').forEach(s=>{if(!s.src)jsText+=s.innerText+'\n'});let fullHTML=html.replace('</head>',`<style>${cssText}</style></head>`).replace('</body>',`<script>${jsText}</script></body>`);if(!window.firebase){for(let src of['https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js','https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js']){let s=document.createElement('script');s.src=src;document.head.appendChild(s);await new Promise(r=>s.onload=r)}}const firebaseConfig={apiKey:'AIzaSyD7cc6BCivqXBkvyVAN7IJfWwIdzlyHvLc',authDomain:'luutrutailieu-8b8a9.firebaseapp.com',databaseURL:'https://luutrutailieu-8b8a9-default-rtdb.firebaseio.com',projectId:'luutrutailieu-8b8a9',storageBucket:'luutrutailieu-8b8a9.firebasestorage.app',messagingSenderId:'546483705627',appId:'1:546483705627:web:6657f231053dc66c86e5be',measurementId:'G-P9899B32DX'};const app=firebase.apps.length?firebase.app():firebase.initializeApp(firebaseConfig);const db=firebase.database(app);let key='pages/page_'+Date.now();db.ref(key).set({content:fullHTML}).then(()=>alert('Upload thành công chúc bạn mãi xinh đẹp!\\nKey: '+key)).catch(err=>alert('Upload lỗi! '+err));})()">autofamxulazi</a>
+
+<button id="themeToggle">☀️</button>
+
+<div class="dashboard">
+    <!-- Cột trái: Điều khiển và Ghi đè -->
+    <div class="panel">
+        <h2>Bảng Điều Khiển</h2>
+        <div class="control-group">
+            <label for="roomSelector">Chọn Phòng</label>
+            <select id="roomSelector">
+                <option value="">-- Vui lòng chọn --</option>
+                <option value="30s">Phòng 30 Giây</option>
+                <option value="1m">Phòng 1 Phút</option>
+                <option value="2m">Phòng 2 Phút</option>
+                <option value="5m">Phòng 5 Phút</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Thông Tin Phiên Hiện Tại</label>
+            <div id="sessionInfo" class="session-info">
+                <p>Mã phiên: <strong id="currentSessionId">N/A</strong></p>
+                <p>Trạng thái: <strong id="sessionStatus">Đang chờ</strong></p>
+                <p>Thời gian còn lại: <strong id="sessionCountdown">--</strong> giây</p>
+            </div>
+        </div>
+        <div class="control-group">
+            <label>Kết Quả Dự Kiến (chưa ghi đè)</label>
+            <div id="predictedResult" class="session-info">
+                <p>Kết quả: <strong id="predictedOutcome">N/A</strong></p>
+                <p>Tổng điểm: <strong id="predictedTotal">N/A</strong></p>
+                <p>Xúc xắc: <strong id="predictedDice">N/A</strong></p>
+            </div>
+        </div>
+        <div class="control-group">
+            <label>Ghi Đè Kết Quả (cho phiên trên)</label>
+            <div class="dice-inputs">
+                <input type="number" id="dice1" placeholder="Xúc xắc 1" min="1" max="6">
+                <input type="number" id="dice2" placeholder="Xúc xắc 2" min="1" max="6">
+                <input type="number" id="dice3" placeholder="Xúc xắc 3" min="1" max="6">
+            </div>
+        </div>
+        <button id="overrideBtn">Gửi Lệnh Ghi Đè</button>
+        <div id="status"></div>
+    </div>
+
+    <!-- Cột phải: Dữ liệu người chơi và cược -->
+    <div class="panel">
+        <h2>Dữ Liệu Phòng</h2>
+        <div class="tabs">
+            <button class="tab-button active" data-tab="players">Người Chơi</button>
+            <button class="tab-button" data-tab="bets">Chi Tiết Cược</button>
+        </div>
+        <div id="players" class="tab-content active">
+            <p>Tổng số người chơi: <strong id="playerCount">0</strong></p>
+            <ul id="playerList"></ul>
+        </div>
+        <div id="bets" class="tab-content">
+            <p>Tổng cược: <strong id="totalBetAmount">0</strong> xu</p>
+            <table class="bet-table">
+                <thead>
+                    <tr>
+                        <th>Người Chơi</th>
+                        <th>Loại Cược</th>
+                        <th>Số Tiền</th>
+                    </tr>
+                </thead>
+                <tbody id="betList"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Firebase SDK và Logic -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getDatabase, ref, onValue, off, set, get } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC9YyisDBZ7UGZWRRjuybLG1zVDEB4hjjE",
+        authDomain: "zozi-a1b76.firebaseapp.com",
+        databaseURL: "https://zozi-a1b76-default-rtdb.firebaseio.com",
+        projectId: "zozi-a1b76",
+        storageBucket: "zozi-a1b76.appspot.com",
+        messagingSenderId: "567422216526",
+        appId: "1:567422216526:web:09130f01aa73c0e95ad61f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // --- Constants from game.js ---
+    const RESULT_DISPLAY_DURATION = 15; // seconds
+
+    /**
+     * Creates a stateful pseudo-random number generator seeded with a string.
+     */
+    function Srand(seedStr) {
+        let seed = seedStr.split('').reduce((acc, char, i) => acc + char.charCodeAt(0) * (i + 1), 0);
+        const nextInt32 = function() {
+            let t = seed += 0x6D2B79F5;
+            t = Math.imul(t ^ t >>> 15, t | 1);
+            t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+            return (t ^ t >>> 14) >>> 0;
+        };
+        this.nextInt = function(min, max) {
+            const range = max - min + 1;
+            const threshold = 4294967296 - (4294967296 % range);
+            let random_val;
+            do {
+                random_val = nextInt32();
+            } while (random_val >= threshold);
+            return (random_val % range) + min;
+        };
+    }
+
+    // --- State Management ---
+    let serverTimeOffset = 0;
+    let countdownInterval = null;
+    let resultDisplayTimeout = null;
+    let currentRoomId = null;
+    let currentSessionId = null;
+    let previousSessionId = null;
+    let previousRoomData = null;
+    let currentState = 'waiting'; // 'waiting', 'counting_down', 'showing_results'
+    let activeListeners = [];
+    const userCache = new Map();
+
+    // --- Get Server Time Offset ---
+    const offsetRef = ref(db, '.info/serverTimeOffset');
+    onValue(offsetRef, (snap) => {
+        serverTimeOffset = snap.val();
+    });
+
+    // --- Theme Toggle Logic ---
+    const themeToggle = document.getElementById('themeToggle');
+    const body = document.body;
+
+    function applyTheme(theme) {
+        if (theme === 'light') {
+            body.classList.add('light-mode');
+            themeToggle.textContent = '🌙';
+        } else {
+            body.classList.remove('light-mode');
+            themeToggle.textContent = '☀️';
+        }
+    }
+
+    themeToggle.addEventListener('click', () => {
+        const isLight = body.classList.toggle('light-mode');
+        const newTheme = isLight ? 'light' : 'dark';
+        localStorage.setItem('theme', newTheme);
+        applyTheme(newTheme);
+    });
+
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    applyTheme(savedTheme);
+
+    const roomSelector = document.getElementById('roomSelector');
+    const overrideBtn = document.getElementById('overrideBtn');
+    
+    // Tab switching logic
+    const tabs = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            tabContents.forEach(c => c.classList.remove('active'));
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    // Main logic: handle room selection
+    roomSelector.addEventListener('change', (e) => {
+        const roomId = e.target.value;
+        if (roomId) {
+            switchRoom(roomId);
+        } else {
+            cleanupListeners();
+            resetUI();
+        }
+    });
+
+    function cleanupListeners() {
+        if (countdownInterval) clearInterval(countdownInterval);
+        activeListeners.forEach(({ path, listener }) => {
+            const dbRef = ref(db, path);
+            off(dbRef, 'value', listener);
+        });
+        activeListeners = [];
+    }
+
+    function switchRoom(roomId) {
+        cleanupListeners();
+        resetUI();
+        currentRoomId = roomId;
+
+        const roomRefPath = `game_rooms/room_${roomId}`;
+        const roomListener = onValue(ref(db, roomRefPath), (snapshot) => {
+            if (!snapshot.exists()) {
+                resetSessionUI();
+                return;
+            }
+            
+            const roomData = snapshot.val();
+            document.getElementById('currentSessionId').textContent = roomData.sessionId || 'N/A';
+
+            // Clear previous results and timer artifacts
+            clearTimeout(resultDisplayTimeout);
+            const betRows = document.querySelectorAll('#betList tr');
+            
+            const now = new Date().getTime() + serverTimeOffset;
+            const sessionEndTime = roomData.endTime || 0;
+
+            // State machine logic
+            if (now < sessionEndTime) {
+                // COUNTING DOWN
+                if (currentState !== 'counting_down' || roomData.sessionId !== currentSessionId) {
+                    console.log(`State change: -> counting_down for session ${roomData.sessionId}`);
+                    currentState = 'counting_down';
+                    currentSessionId = roomData.sessionId;
+                    
+                    // Clear old results and calculate new prediction
+                    betRows.forEach(row => row.classList.remove('win', 'loss'));
+                    calculatePredictedResult(currentSessionId);
+                    
+                    listenForBets(currentSessionId);
+                }
+                document.getElementById('sessionStatus').textContent = 'Đang đếm ngược';
+                syncCountdown(sessionEndTime);
+
+            } else if (now < sessionEndTime + (RESULT_DISPLAY_DURATION * 1000)) {
+                // SHOWING RESULTS
+                if (currentState !== 'showing_results') {
+                    console.log(`State change: -> showing_results for session ${currentSessionId}`);
+                    currentState = 'showing_results';
+                    if(countdownInterval) clearInterval(countdownInterval);
+                    document.getElementById('sessionCountdown').textContent = '0';
+                    document.getElementById('sessionStatus').textContent = `Hiển thị kết quả`;
+                    showResults(roomData); // Show results for the session that just ended
+                }
+            } else {
+                // WAITING FOR NEXT SESSION
+                if (currentState !== 'waiting') {
+                    console.log(`State change: -> waiting`);
+                    currentState = 'waiting';
+                    if(countdownInterval) clearInterval(countdownInterval);
+                    document.getElementById('sessionCountdown').textContent = '--';
+                    document.getElementById('sessionStatus').textContent = 'Đang chờ phiên mới';
+                    
+                    // Clear results after display duration
+                    betRows.forEach(row => row.classList.remove('win', 'loss'));
+                    
+                    // Clear bets for the new session
+                    document.getElementById('betList').innerHTML = '';
+                    document.getElementById('totalBetAmount').textContent = '0';
+                }
+            }
+        });
+        activeListeners.push({ id: 'room', path: roomRefPath, listener: roomListener });
+
+        const playersRefPath = `room_metadata/${roomId}/players`;
+        const playersListener = onValue(ref(db, playersRefPath), (snapshot) => {
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = '';
+            if (snapshot.exists()) {
+                const players = snapshot.val();
+                const playerIds = Object.keys(players);
+                document.getElementById('playerCount').textContent = playerIds.length;
+                playerIds.forEach(uid => {
+                    const li = document.createElement('li');
+                    li.id = `player-${uid}`;
+                    li.textContent = `Đang tải...`;
+                    playerList.appendChild(li);
+                    fetchUser(uid).then(user => {
+                        li.textContent = `${user.displayName} (Xu: ${user.balance.toLocaleString()})`;
+                    });
+                });
+            } else {
+                document.getElementById('playerCount').textContent = 0;
+            }
+        });
+        activeListeners.push({ id: 'players', path: playersRefPath, listener: playersListener });
+    }
+
+    function calculatePredictedResult(sessionId) {
+        if (!sessionId) {
+            document.getElementById('predictedOutcome').textContent = 'N/A';
+            document.getElementById('predictedTotal').textContent = 'N/A';
+            document.getElementById('predictedDice').textContent = 'N/A';
+            return;
+        }
+
+        const randGen = new Srand(sessionId);
+        const dice1 = randGen.nextInt(1, 6);
+        const dice2 = randGen.nextInt(1, 6);
+        const dice3 = randGen.nextInt(1, 6);
+        const total = dice1 + dice2 + dice3;
+
+        const taiXiu = total >= 11 ? 'Tài' : 'Xỉu';
+        const chanLe = total % 2 === 0 ? 'Chẵn' : 'Lẻ';
+
+        document.getElementById('predictedOutcome').textContent = `${taiXiu} - ${chanLe}`;
+        document.getElementById('predictedTotal').textContent = total;
+        document.getElementById('predictedDice').textContent = `${dice1} - ${dice2} - ${dice3}`;
+    }
+
+    function listenForBets(sessionId) {
+        const betsRefPath = `game_bets/${sessionId}`;
+        const betsListener = onValue(ref(db, betsRefPath), (snapshot) => {
+            const betList = document.getElementById('betList');
+            betList.innerHTML = '';
+            let totalBetAmount = 0;
+            if (snapshot.exists()) {
+                const bets = snapshot.val();
+                const allBetPromises = [];
+
+                for (const betType in bets) {
+                    const userBets = bets[betType];
+                    for (const uid in userBets) {
+                        // The value in game_bets might be 'true' or an amount. We need the actual amount from room_metadata.
+                        const promise = fetchUser(uid).then(user => {
+                            return get(ref(db, `room_metadata/${currentRoomId}/players/${uid}/bets/${betType}`)).then(betSnapshot => {
+                                const amount = betSnapshot.val(); // This is the actual bet amount
+                                if (typeof amount === 'number') {
+                                    totalBetAmount += amount;
+                                }
+                                return {
+                                    uid: uid,
+                                    displayName: user.displayName,
+                                    betType: betType,
+                                    amount: amount
+                                };
+                            });
+                        });
+                        allBetPromises.push(promise);
+                    }
+                }
+
+                Promise.all(allBetPromises).then(betDetails => {
+                    // Update total bet amount after all promises are resolved
+                    document.getElementById('totalBetAmount').textContent = totalBetAmount.toLocaleString();
+
+                    betDetails.sort((a, b) => (typeof b.amount === 'number' ? b.amount : 0) - (typeof a.amount === 'number' ? a.amount : 0));
+                    betDetails.forEach(detail => {
+                        const row = betList.insertRow();
+                        row.dataset.betType = detail.betType;
+                        row.dataset.uid = detail.uid;
+
+                        const amountDisplay = typeof detail.amount === 'number' 
+                            ? detail.amount.toLocaleString() 
+                            : 'N/A';
+                        row.innerHTML = `
+                            <td>${detail.displayName}</td>
+                            <td>${formatBetType(detail.betType)}</td>
+                            <td>${amountDisplay}</td>
+                        `;
+                    });
+                });
+            } else {
+                 document.getElementById('totalBetAmount').textContent = '0';
+            }
+        });
+        activeListeners.push({ id: 'bets', path: betsRefPath, listener: betsListener });
+    }
+
+    async function showResults(roomData) {
+        if (!roomData || !roomData.sessionId) return;
+
+        const overrideRef = ref(db, `result_overrides/${roomData.sessionId}`);
+        const overrideSnapshot = await get(overrideRef);
+        let dice1, dice2, dice3, total;
+
+        if (overrideSnapshot.exists()) {
+            const overrideData = overrideSnapshot.val();
+            dice1 = overrideData.dice1;
+            dice2 = overrideData.dice2;
+            dice3 = overrideData.dice3;
+        } else {
+            const randGen = new Srand(roomData.sessionId);
+            dice1 = randGen.nextInt(1, 6);
+            dice2 = randGen.nextInt(1, 6);
+            dice3 = randGen.nextInt(1, 6);
+        }
+        total = dice1 + dice2 + dice3;
+
+        const isTai = total >= 11;
+        const isChan = total % 2 === 0;
+        
+        const winningOutcomes = {
+            'tai': isTai,
+            'xiu': !isTai,
+            'chan': isChan,
+            'le': !isChan,
+        };
+
+        const betRows = document.querySelectorAll('#betList tr');
+        betRows.forEach(row => {
+            const betType = row.dataset.betType;
+            const isWin = winningOutcomes[betType] === true;
+            row.classList.add(isWin ? 'win' : 'loss');
+        });
+    }
+
+    function syncCountdown(endTime) {
+        if (countdownInterval) clearInterval(countdownInterval);
+        const countdownEl = document.getElementById('sessionCountdown');
+        if (!countdownEl) return;
+
+        countdownInterval = setInterval(() => {
+            const now = new Date().getTime() + serverTimeOffset;
+            const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+            
+            if (now > endTime) {
+                countdownEl.textContent = '0';
+                clearInterval(countdownInterval);
+            } else {
+                countdownEl.textContent = remaining;
+            }
+        }, 1000);
+    }
+
+    async function fetchUser(uid) {
+        if (userCache.has(uid)) {
+            return userCache.get(uid);
+        }
+
+        try {
+            const [userSnapshot, playerSnapshot] = await Promise.all([
+                get(ref(db, `users/${uid}`)),
+                get(ref(db, `room_metadata/${currentRoomId}/players/${uid}`))
+            ]);
+
+            let displayName = `Khách ${uid.substring(0, 5)}`;
+            let balance = 0;
+
+            if (playerSnapshot.exists()) {
+                displayName = playerSnapshot.val().displayName || displayName;
+            }
+
+            if (userSnapshot.exists()) {
+                balance = userSnapshot.val().xu || 0;
+            }
+            
+            const standardizedUser = { displayName, balance };
+            userCache.set(uid, standardizedUser);
+            return standardizedUser;
+
+        } catch (error) {
+            console.error(`Failed to fetch user data for ${uid}:`, error);
+        }
+
+        const defaultUser = { displayName: `Khách ${uid.substring(0,5)}`, balance: 'N/A' };
+        userCache.set(uid, defaultUser);
+        return defaultUser;
+    }
+
+    overrideBtn.addEventListener('click', async () => {
+        if (!currentSessionId) {
+            showStatus('Chưa có phiên nào được chọn hoặc đang hoạt động.', 'error');
+            return;
+        }
+        const dice1 = parseInt(document.getElementById('dice1').value, 10);
+        const dice2 = parseInt(document.getElementById('dice2').value, 10);
+        const dice3 = parseInt(document.getElementById('dice3').value, 10);
+
+        if (isNaN(dice1) || isNaN(dice2) || isNaN(dice3) || dice1 < 1 || dice1 > 6 || dice2 < 1 || dice2 > 6 || dice3 < 1 || dice3 > 6) {
+            showStatus('Vui lòng nhập giá trị hợp lệ cho cả 3 xúc xắc (từ 1 đến 6).', 'error');
+            return;
+        }
+
+        try {
+            const overrideRef = ref(db, `result_overrides/${currentSessionId}`);
+            await set(overrideRef, {
+                dice1: dice1,
+                dice2: dice2,
+                dice3: dice3,
+                timestamp: new Date().toISOString()
+            });
+            showStatus(`Đã gửi lệnh ghi đè thành công cho phiên <strong>${currentSessionId}</strong>.`, 'success');
+        } catch (error) {
+            showStatus(`Lỗi khi gửi lệnh: ${error.message}`, 'error');
+        }
+    });
+
+    function showStatus(message, type) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerHTML = message;
+        statusDiv.className = type;
+        statusDiv.style.display = 'block';
+        setTimeout(() => { statusDiv.style.display = 'none'; }, 5000);
+    }
+    
+    function formatBetType(type) {
+        switch(type) {
+            case 'tai': return 'Tài';
+            case 'xiu': return 'Xỉu';
+            case 'chan': return 'Chẵn';
+            case 'le': return 'Lẻ';
+            default: return type.toUpperCase();
+        }
+    }
+
+    function resetUI() {
+        resetSessionUI();
+        document.getElementById('playerCount').textContent = 0;
+        document.getElementById('playerList').innerHTML = '';
+        document.getElementById('totalBetAmount').textContent = 0;
+        document.getElementById('betList').innerHTML = '';
+    }
+
+    function resetSessionUI() {
+        currentSessionId = null;
+        document.getElementById('currentSessionId').textContent = 'N/A';
+        document.getElementById('sessionStatus').textContent = 'Đang chờ';
+        document.getElementById('sessionCountdown').textContent = '--';
+    }
+
+</script>
+
 </body>
 </html>
