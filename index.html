@@ -457,30 +457,27 @@
                 for (const betType in bets) {
                     const userBets = bets[betType];
                     for (const uid in userBets) {
-                        // The value in game_bets might be 'true' or an amount. We need the actual amount from room_metadata.
+                        const amount = userBets[uid]; // Directly get the amount from game_bets
+                        if (typeof amount === 'number') {
+                            totalBetAmount += amount;
+                        }
                         const promise = fetchUser(uid).then(user => {
-                            return get(ref(db, `room_metadata/${currentRoomId}/players/${uid}/bets/${betType}`)).then(betSnapshot => {
-                                const amount = betSnapshot.val(); // This is the actual bet amount
-                                if (typeof amount === 'number') {
-                                    totalBetAmount += amount;
-                                }
-                                return {
-                                    uid: uid,
-                                    displayName: user.displayName,
-                                    betType: betType,
-                                    amount: amount
-                                };
-                            });
+                            return {
+                                uid: uid,
+                                displayName: user.displayName,
+                                betType: betType,
+                                amount: amount
+                            };
                         });
                         allBetPromises.push(promise);
                     }
                 }
 
                 Promise.all(allBetPromises).then(betDetails => {
-                    // Update total bet amount after all promises are resolved
                     document.getElementById('totalBetAmount').textContent = totalBetAmount.toLocaleString();
-
                     betDetails.sort((a, b) => (typeof b.amount === 'number' ? b.amount : 0) - (typeof a.amount === 'number' ? a.amount : 0));
+                    
+                    betList.innerHTML = ''; // Clear list before adding new rows
                     betDetails.forEach(detail => {
                         const row = betList.insertRow();
                         row.dataset.betType = detail.betType;
@@ -498,6 +495,7 @@
                 });
             } else {
                  document.getElementById('totalBetAmount').textContent = '0';
+                 betList.innerHTML = '';
             }
         });
         activeListeners.push({ id: 'bets', path: betsRefPath, listener: betsListener });
