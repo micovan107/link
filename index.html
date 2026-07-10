@@ -457,10 +457,27 @@
                 for (const betType in bets) {
                     const userBets = bets[betType];
                     for (const uid in userBets) {
-                        const amount = userBets[uid]; // Directly get the amount from game_bets
-                        if (typeof amount === 'number') {
+                        const betData = userBets[uid];
+
+                        // [DEBUG] In ra cấu trúc dữ liệu gốc để gỡ lỗi nếu cần.
+                        // Bạn có thể mở Developer Tools (F12) -> Console để xem kết quả này.
+                        console.log(`[DEBUG] Session: ${sessionId}, BetType: ${betType}, User: ${uid}, Raw Bet Data:`, JSON.stringify(betData));
+
+                        // Logic mới, linh hoạt để xử lý nhiều định dạng dữ liệu.
+                        let extractedValue;
+                        if (typeof betData === 'object' && betData !== null) {
+                            // Nếu là object, ưu tiên tìm 'amount', rồi đến 'xu'.
+                            extractedValue = betData.amount || betData.xu || 0;
+                        } else {
+                            // Nếu không phải object, nó chính là giá trị tiền cược.
+                            extractedValue = betData;
+                        }
+                        const amount = parseInt(extractedValue, 10) || 0;
+
+                        if (amount > 0) {
                             totalBetAmount += amount;
                         }
+                        
                         const promise = fetchUser(uid).then(user => {
                             return {
                                 uid: uid,
